@@ -3,6 +3,8 @@
 #Coloquei no final comandos para IRT também
 ###
 
+##testing
+
 setwd("C:/Users/user/Google Drive/Projeto_Duke/SST Validation")
 data<-read.csv("sstdata.csv",header=T)
 data1<-data.frame(data$q11,data$q12,data$q13,data$q14,data$q15,data$q16,data$q17,data$q18,data$q19,data$q20,data$q21,data$q22)
