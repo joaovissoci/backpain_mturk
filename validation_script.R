@@ -1,4 +1,6 @@
 
+#commit test
+
 #Ricardo, este é o script que usei para validação do SST, pode servir como modelo para EFA e CFA.
 #Coloquei no final comandos para IRT também
 ###
