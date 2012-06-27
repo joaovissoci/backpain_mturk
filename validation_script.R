@@ -1,16 +1,4 @@
 
-#Ricardo, este é o script que usei para validação do SST, pode servir como modelo para EFA e CFA.
-#Coloquei no final comandos para IRT também
-###
-
-##testing
-
-setwd("C:/Users/user/Google Drive/Projeto_Duke/SST Validation")
-data<-read.csv("sstdata.csv",header=T)
-data1<-data.frame(data$q11,data$q12,data$q13,data$q14,data$q15,data$q16,data$q17,data$q18,data$q19,data$q20,data$q21,data$q22)
-data2<-read.csv("sstdata1.csv",header=T)
-#data<-na.omit(data1)
-
 #Instal packages needes for the analysis
 lapply(c("ggplot2", "psych", "RCurl", "irr", "nortest", "moments"), library, character.only=T)
 
@@ -18,18 +6,17 @@ lapply(c("ggplot2", "psych", "RCurl", "irr", "nortest", "moments"), library, cha
 #Functions to pull the dara from the internet file 
 options(RCurlOptions = list(capath = system.file("CurlSSL", "cacert.pem", package = "RCurl"), ssl.verifypeer = FALSE))
 #see http://goo.gl/mQwxO on how to get this link
-#link below won't work until data is entered in the right format
-data <- getURL("https://docs.google.com/spreadsheet/pub?hl=en&hl=en&key=0AoTReYGK49h_dEFHWXVfODR0NlZWdXFoVTZjT09oc0E&single=true&gid=3&output=csv")
-dataicc<-read.csv(textConnection(data))
-names(preference.tto)
+data1 <- getURL("https://docs.google.com/spreadsheet/pub?key=0AoTReYGK49h_dEFHWXVfODR0NlZWdXFoVTZjT09oc0E&single=true&gid=1&output=csv
+")
+data<-read.csv(textConnection(data1))
 
-options(RCurlOptions = list(capath = system.file("CurlSSL", "cacert.pem", package = "RCurl"), ssl.verifypeer = FALSE))
-#see http://goo.gl/mQwxO on how to get this link
-#link below won't work until data is entered in the right format
+#data for ICC analysis
+data2 <- getURL("https://docs.google.com/spreadsheet/pub?hl=en&hl=en&key=0AoTReYGK49h_dEFHWXVfODR0NlZWdXFoVTZjT09oc0E&single=true&gid=3&output=csv")
+dataicc<-read.csv(textConnection(data2))
+
+#data for correlation analysis
 data4 <- getURL("https://docs.google.com/spreadsheet/pub?hl=en&hl=en&key=0AoTReYGK49h_dEFHWXVfODR0NlZWdXFoVTZjT09oc0E&single=true&gid=4&output=csv")
 datacor<-read.csv(textConnection(data4))
-names(preference.tto)
-
 
 ##########################################################################################################################
 #Exploratory Data Anlysis
@@ -40,42 +27,40 @@ summary(data)
 ##########################################################################################################################
 #EFA
 #Determine the number of factors
+
+#Package to be installed to EFa ANalysis
 library(nFactors)
 
-par(mfrow=c(2,2))
-ev <- eigen(cor(data)) # get eigenvalues
-ev
-ap <- parallel(subject=nrow(data),var=ncol(data),rep=100,cent=.05)
-nS <- nScree(ev$values)
-plotnScree(nS)
+#Group of functinos to determine the number os items to be extracted
+par(mfrow=c(2,2)) #Command to configure the plot area for the scree plot graph
+ev <- eigen(cor(data)) # get eigenvalues - insert the data you want to calculate the scree plot for
+ev # Show eigend values
+ap <- parallel(subject=nrow(data),var=ncol(data),rep=100,cent=.05) #Calculate the acceleration factor
+nS <- nScree(ev$values) #Set up the Scree Plot 
+plotnScree(nS) # Plot the Graph
 
-#KMO
-kmo = function( data1 ){
+#Functino to calculate the KMO values
+kmo = function(data)
+  
+  {
   
   library(MASS)
   X <- cor(as.matrix(data1))
   iX <- ginv(X)
   S2 <- diag(diag((iX^-1)))
-  AIS <- S2%*%iX%*%S2                      # anti-image covariance matrix
-  IS <- X+AIS-2*S2                         # image covariance matrix
+  AIS <- S2%*%iX%*%S2                      
+  IS <- X+AIS-2*S2                         
   Dai <- sqrt(diag(diag(AIS)))
-  IR <- ginv(Dai)%*%IS%*%ginv(Dai)         # image correlation matrix
-  AIR <- ginv(Dai)%*%AIS%*%ginv(Dai)       # anti-image correlation matrix
+  IR <- ginv(Dai)%*%IS%*%ginv(Dai)         
+  AIR <- ginv(Dai)%*%AIS%*%ginv(Dai)       
   a <- apply((AIR - diag(diag(AIR)))^2, 2, sum)
   AA <- sum(a)
   b <- apply((X - diag(nrow(X)))^2, 2, sum)
   BB <- sum(b)
-  MSA <- b/(b+a)                        # indiv. measures of sampling adequacy
-  
-  AIR <- AIR-diag(nrow(AIR))+diag(MSA)  # Examine the anti-image of the
-  # correlation matrix. That is the
-  # negative of the partial correlations,
-  # partialling out all other variables.
-  
-  kmo <- BB/(AA+BB)                     # overall KMO statistic
-  
-  # Reporting the conclusion
-  if (kmo >= 0.00 && kmo < 0.50){
+  MSA <- b/(b+a)                        
+    AIR <- AIR-diag(nrow(AIR))+diag(MSA)  
+    kmo <- BB/(AA+BB)                     
+    if (kmo >= 0.00 && kmo < 0.50){
     test <- 'The KMO test yields a degree of common variance
 unacceptable for FA.'
   } else if (kmo >= 0.50 && kmo < 0.60){
@@ -97,256 +82,90 @@ unacceptable for FA.'
                 AIR = AIR )
   return(ans)
   
-}    # end of kmo()
-kmo(data)
+}    # end of the function kmo()
 
-#FACTOR EXTRACTION
+kmo(data) #Run the Kmo function for the data you want to calculate
+
+#Functions to exctract factor loadings for differente factor structures
+
+#Packages needed to run the Data exctraction function
 library(psych)
 library(GPArotation)
 
-fa(data1,3,fm="pa",rotate="promax")
-fa(data1,1,fm="pa",rotate="promax")
-fa(data1,2,fm="pa",rotate="promax")
+fa(data,3,fm="pa",rotate="promax") #Functino to exctract the factor loadings. Arguments are DATA, Number of factors, rotation method. Look here http://goo.gl/kY3ln for different methods of estimations or rotations
 
 #######################################################################################################
-#CFA Models
-# Sem model
+#Using SEM package to rund CFA Models
+# CFA model
+
+#Package you will need to run the CFA Model
 library (sem)
 
-#1 Factor Model ############################################
+# Function to specify the model you will run
+# You need to type these values that specify the model's relations please see DDD for further instructions
+#Summarizing here you will create the paths for the SEM (CFA) model. Use -> for unidirectional relatino and <-> for correlation, covariance or error.
+mod.1 <- specifyModel()
 
-mod.1 <- specifyModel()# Type these values that specify the model's relations (just use de Ctrl+R over each relation).
+#Defining Latent Variables - Set the variable you wnat to create (SST, in the example is the latent variable)
+# Put the arrow for direction ->, the arguments are: Latent Variable, observed variable, code, NA (Indicating that you want the program to define this loading number)
+SST->q11,var3,NA
+SST->q12,var4,NA
+SST->q13,var5,NA
+SST->q14,var6,NA
+SST->q15,var7,NA
+SST->q16,var8,NA
+SST->q17,var9,NA
+SST->q18,var10,NA
+SST->q19,var11,NA
+SST->q20,var12,NA
+SST->q21,var13,NA
+SST->q22,var14,NA
 
-#Latent Variables
-SST->data.q11,var3,NA
-SST->data.q12,var4,NA
-SST->data.q13,var5,NA
-SST->data.q14,var6,NA
-SST->data.q15,var7,NA
-SST->data.q16,var8,NA
-SST->data.q17,var9,NA
-SST->data.q18,var10,NA
-SST->data.q19,var11,NA
-SST->data.q20,var12,NA
-SST->data.q21,var13,NA
-SST->data.q22,var14,NA
-
-#Erros and COv
+#You always have to specify the erros and COvariances, so you will use <-> between the variables
+# In the example, we are setting the factor weight for the first error to 1 so we change the order, NA goes int he code argument and 1 to the loading argument (associated with the latent variable is one of doing it)
 SST<->SST,NA,1
-data.q11<->data.q11,err3,NA
-data.q12<->data.q12,err4,NA
-data.q13<->data.q13,err5,NA
-data.q14<->data.q14,err6,NA
-data.q15<->data.q15,err7,NA
-data.q16<->data.q16,err8,NA
-data.q17<->data.q17,err9,NA
-data.q18<->data.q18,err10,NA
-data.q19<->data.q19,err11,NA
-data.q20<->data.q20,err12,NA
-data.q21<->data.q21,err13,NA
-data.q22<->data.q22,err14,NA
+q11<->q11,err3,NA
+q12<->q12,err4,NA
+q13<->q13,err5,NA
+q14<->q14,err6,NA
+q15<->q15,err7,NA
+q16<->q16,err8,NA
+q17<->q17,err9,NA
+q18<->q18,err10,NA
+q19<->q19,err11,NA
+q20<->q20,err12,NA
+q21<->q21,err13,NA
+q22<->q22,err14,NA
 
-# Insert de covariance matrix
-cov <- cov(data2, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman"))
-cov
-cor(data1)
-sem.1 <- sem(mod.1, cov, N=100)
-fscore(sem.wh.2)
+# Insert de covariance matrix - CFA (or SEM) is always calculated in relation to a covariance or correlation matrix, here we will create the covariance matrix
+cov <- cov(data, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman"))
+cov #Diplat covariance matrix
+cor(data) #Display correlation matrix (Only if you need to check the correlation matrix)
 
-summary(sem.1)
-
-modIndices(sem.1)
-
-#2 Factor Model ##################################################
-
-mod.wh.2 <- specifyModel()# Type these values that specify the model's relations (just use de Ctrl+R over each relation).
-
-#Latent Variables
-SST3->data.q11,var3,NA
-SST3->data.q12,var4,NA
-SST3->data.q13,var5,NA
-SST3->data.q14,var6,NA
-SST1->data.q15,var7,NA
-SST1->data.q16,var8,NA
-SST1->data.q17,var9,NA
-SST2->data.q18,var10,NA
-SST1->data.q19,var11,NA
-SST2->data.q20,var12,NA
-SST1->data.q21,var13,NA
-SST2->data.q22,var14,NA
-
-#Erros and COv
-SST1<->SST1,NA,1
-SST2<->SST2,NA,1
-SST3<->SST3,NA,1
-data.q11<->data.q11,err3,NA
-data.q12<->data.q12,err4,NA
-data.q13<->data.q13,err5,NA
-data.q14<->data.q14,err6,NA
-data.q15<->data.q15,err7,NA
-data.q16<->data.q16,err8,NA
-data.q17<->data.q17,err9,NA
-data.q18<->data.q18,err10,NA
-data.q19<->data.q19,err11,NA
-data.q20<->data.q20,err12,NA
-data.q21<->data.q21,err13,NA
-data.q22<->data.q22,err14,NA
-data.q14<->data.q13,cov1,NA
-data.q20->data.q14,cov3,NA
-SST1<->SST2,lat1,NA
-SST1<->SST3,lat2,NA
-SST2<->SST3,lat3,NA
-data.q22<->data.q21,cov4,NA
-SST<->SST,lat4,NA
-
-# Insert de covariance matrix
-cov <- cov(data1, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman"))
-cov
-cor(data1)
-sem.wh.2 <- sem(mod.wh.2, cov, N=100)
-fscore(sem.wh.2)
-
-summary(sem.wh.2)
-
-mod.indices(sem.wh.2)
-
-# 3 Factor Model ################################################
-
-mod.3 <- specifyModel()# Type these values that specify the model's relations (just use de Ctrl+R over each relation).
-
-#Latent Variables
-SST3->data.q11,var3,NA
-SST3->data.q12,var4,NA
-SST3->data.q13,var5,NA
-SST3->data.q14,var6,NA
-SST1->data.q15,var7,NA
-SST1->data.q16,var8,NA
-SST1->data.q17,var9,NA
-SST2->data.q18,var10,NA
-SST1->data.q19,var11,NA
-SST2->data.q20,var12,NA
-SST1->data.q21,var13,NA
-SST2->data.q22,var14,NA
-
-#Erros and COv
-SST1<->SST1,NA,1
-SST2<->SST2,NA,1
-SST3<->SST3,NA,1
-data.q11<->data.q11,err3,NA
-data.q12<->data.q12,err4,NA
-data.q13<->data.q13,err5,NA
-data.q14<->data.q14,err6,NA
-data.q15<->data.q15,err7,NA
-data.q16<->data.q16,err8,NA
-data.q17<->data.q17,err9,NA
-data.q18<->data.q18,err10,NA
-data.q19<->data.q19,err11,NA
-data.q20<->data.q20,err12,NA
-data.q21<->data.q21,err13,NA
-data.q22<->data.q22,err14,NA
-data.q14<->data.q13,cov1,NA
-data.q20->data.q14,cov3,NA
-SST1<->SST2,lat1,NA
-SST1<->SST3,lat2,NA
-SST2<->SST3,lat3,NA
-data.q22<->data.q21,cov4,NA
-
-# Insert de covariance matrix
-cov <- cov(data1, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman"))
-cov
-cor(data1)
-sem.3 <- sem(mod.3, cov, N=100)
-effects(sem.3)
-standardizedCoefficients(sem.3)
-standardizedResiduals(sem.3)
-summary(sem.3)
-
-mod.indices(sem.wh.2)
-
-#2o Order Model#######################################################
-# 3 Factor Model
-
-mod.4 <- specifyModel()# Type these values that specify the model's relations (just use de Ctrl+R over each relation).
-
-#Latent Variables
-SST3->data.q11,var3,NA
-SST3->data.q12,var4,NA
-SST3->data.q13,var5,NA
-SST3->data.q14,var6,NA
-SST1->data.q15,var7,NA
-SST1->data.q16,var8,NA
-SST1->data.q17,var9,NA
-SST2->data.q18,var10,NA
-SST1->data.q19,var11,NA
-SST2->data.q20,var12,NA
-SST1->data.q21,var13,NA
-SST2->data.q22,var14,NA
-SST->SST1,NA,1
-SST->SST2,lat1,NA
-SST->SST3,lat2,NA
-
-#Erros and COv
-SST1<->SST1,NA,1
-SST2<->SST2,NA,1
-SST3<->SST3,NA,1
-SST<->SST,erro1,NA
-data.q11<->data.q11,err3,NA
-data.q12<->data.q12,err4,NA
-data.q13<->data.q13,err5,NA
-data.q14<->data.q14,err6,NA
-data.q15<->data.q15,err7,NA
-data.q16<->data.q16,err8,NA
-data.q17<->data.q17,err9,NA
-data.q18<->data.q18,err10,NA
-data.q19<->data.q19,err11,NA
-data.q20<->data.q20,err12,NA
-data.q21<->data.q21,err13,NA
-data.q22<->data.q22,err14,NA
-data.q14<->data.q13,cov1,NA
-data.q20->data.q14,cov3,NA
-#SST1<->SST2,lat1,NA
-#SST1<->SST3,lat2,NA
-#SST2<->SST3,lat3,NA
-#data.q22<->data.q21,cov4,NA
-
-# Insert de covariance matrix
-cov <- cov(data1, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman"))
-cov
-cor(data1)
-sem.4 <- sem(mod.4, cov, N=100)
-effects(sem.3)
-standardizedCoefficients(sem.4)
-standardizedResiduals(sem.3)
-summary(sem.4)
-
-modIndices(sem.4)
+#Run SEM functino to get the SEM model
+sem.1 <- sem(mod.1, cov, N=100) #mod.1 is the model you ahve crated before, cov is the covriance matrix and N argument is the number of observation
+summary(sem.1) # Show summary resutls for SEM
+modIndices(sem.1) #Show modification indexes to enhance goodness of fit (suggested to change the model for modification indexes higher than 40, but it is your call)
+standardizedCoefficients(sem.1) #Get the standardize coefficientes for each path
+standardizedResiduals(sem.1) #Get the residuals for the regressions models
 
 #################################################################################################
 
-#Alpha de Cronbach by psych package
-alpha(data1, keys=NULL,title=NULL,na.rm = TRUE)
-alpha(data2, keys=NULL,title=NULL,na.rm = TRUE)
+#Alpha de Cronbach by psych package - Gives lots if indicatores, but doesn't give the CI (must have a way that I don't know yet)
+alpha(data, keys=NULL,title=NULL,na.rm = TRUE)
 
-
-#Alpha de Cronbach by ltm package
+#Alpha de Cronbach by ltm package - GIves CI 
 install.packages("ltm")
 library(ltm)
-cronbach.alpha(data2$PA, standardized = TRUE, CI = TRUE, 
+cronbach.alpha(data, standardized = TRUE, CI = TRUE, 
                probs = c(0.025, 0.975), B = 1000, na.rm = FALSE)
 
 #################################################################################################
 
-# ICC by psy package
-
-install.packages("psy")
-library(psy)
-
-x<-data(expsy)
-icc(expsy[,c(12,14,16)])
-
 # ICC by irr package
 attach(dataicc)
 summary(dataicc)
+#Creating data frames for ICC analysis
 PAICC<-data.frame(PA,PA2)
 ADLICC<-data.frame(ADL,ADL2)
 CRICC<-data.frame(CR,CR2)
@@ -355,11 +174,7 @@ VGICC<-data.frame(PA,PA2)
 install.packages("irr")
 library(irr)
 
-cc(ratings, model = c("oneway", "twoway"), 
-   type = c("consistency", "agreement"), 
-   unit = c("single", "average"), r0 = 0, conf.level = 0.95)
-
-data(dataicc)
+#Command to give ICC
 icc(PAICC, model="twoway", type="agreement")
 icc(ADLICC, model="twoway", type="agreement")
 icc(CRICC, model="twoway", type="agreement")
@@ -368,16 +183,18 @@ icc(VGICC, model="twoway", type="agreement")
 ###########################################################
 #Correlation with SF-36
 
+#Clean workspace
 summary(datacor)
 detach(dataicc)
 detach(datacor)
 attach(datacor)       
+#Creating correlations vectors
 sst<-data.frame(PA,ADL,CR,VG)
 sf36<-data.frame(CF,Limit,Dor,SG,VIT,AS,Emo,SM)
 
 cor(sst,sf36)
-cor<-as.table(cor(sst,sf36))
-cor.test(PA,CF,method=c("spearman"))
+cor<-as.table(cor(sst,sf36)) #Give correlation matrix
+cor.test(PA,CF,method=c("spearman")) #Give correlation significance test
 cor.test(PA,Limit,method=c("spearman"))
 cor.test(PA,Dor,method=c("spearman"))
 cor.test(PA,SG,method=c("spearman"))
@@ -386,7 +203,7 @@ cor.test(PA,AS,method=c("spearman"))
 cor.test(PA,Emo,method=c("spearman"))
 cor.test(PA,SM,method=c("spearman"))
 
-#### IRT
+#### IRT Analysis - Still need to work on it. Have tried only once, but will dominate this when we need to use it
 
 install.packages("ltm")
 library(ltm)
