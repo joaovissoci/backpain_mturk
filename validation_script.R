@@ -1,4 +1,19 @@
 
+<<<<<<< HEAD
+=======
+#commit test
+
+#Ricardo, este é o script que usei para validação do SST, pode servir como modelo para EFA e CFA.
+#Coloquei no final comandos para IRT também
+###
+
+setwd("C:/Users/user/Google Drive/Projeto_Duke/SST Validation")
+data<-read.csv("sstdata.csv",header=T)
+data1<-data.frame(data$q11,data$q12,data$q13,data$q14,data$q15,data$q16,data$q17,data$q18,data$q19,data$q20,data$q21,data$q22)
+data2<-read.csv("sstdata1.csv",header=T)
+#data<-na.omit(data1)
+
+>>>>>>> 3ea635490a1fcd36bcc2d9110a512b3b9d2134fc
 #Instal packages needes for the analysis
 lapply(c("ggplot2", "psych", "RCurl", "irr", "nortest", "moments"), library, character.only=T)
 
