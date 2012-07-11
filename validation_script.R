@@ -1,19 +1,7 @@
+library(gWidgetsRGtk2)
+library(formatR)
+#tidy.gui()
 
-<<<<<<< HEAD
-=======
-#commit test
-
-#Ricardo, este é o script que usei para validação do SST, pode servir como modelo para EFA e CFA.
-#Coloquei no final comandos para IRT também
-###
-
-setwd("C:/Users/user/Google Drive/Projeto_Duke/SST Validation")
-data<-read.csv("sstdata.csv",header=T)
-data1<-data.frame(data$q11,data$q12,data$q13,data$q14,data$q15,data$q16,data$q17,data$q18,data$q19,data$q20,data$q21,data$q22)
-data2<-read.csv("sstdata1.csv",header=T)
-#data<-na.omit(data1)
-
->>>>>>> 3ea635490a1fcd36bcc2d9110a512b3b9d2134fc
 #Instal packages needes for the analysis
 lapply(c("ggplot2", "psych", "RCurl", "irr", "nortest", "moments"), library, character.only=T)
 
@@ -51,53 +39,47 @@ par(mfrow=c(2,2)) #Command to configure the plot area for the scree plot graph
 ev <- eigen(cor(data)) # get eigenvalues - insert the data you want to calculate the scree plot for
 ev # Show eigend values
 ap <- parallel(subject=nrow(data),var=ncol(data),rep=100,cent=.05) #Calculate the acceleration factor
+summary(ap)
 nS <- nScree(ev$values) #Set up the Scree Plot 
 plotnScree(nS) # Plot the Graph
 
-#Functino to calculate the KMO values
-kmo = function(data)
-  
-  {
-  
+#Function to calculate the KMO values
+kmo = function(data) {
   library(MASS)
-  X <- cor(as.matrix(data1))
+  X <- cor(as.matrix(data))
   iX <- ginv(X)
   S2 <- diag(diag((iX^-1)))
-  AIS <- S2%*%iX%*%S2                      
-  IS <- X+AIS-2*S2                         
+  AIS <- S2 %*% iX %*% S2
+  IS <- X + AIS - 2 * S2
   Dai <- sqrt(diag(diag(AIS)))
-  IR <- ginv(Dai)%*%IS%*%ginv(Dai)         
-  AIR <- ginv(Dai)%*%AIS%*%ginv(Dai)       
+  IR <- ginv(Dai) %*% IS %*% ginv(Dai)
+  AIR <- ginv(Dai) %*% AIS %*% ginv(Dai)
   a <- apply((AIR - diag(diag(AIR)))^2, 2, sum)
   AA <- sum(a)
   b <- apply((X - diag(nrow(X)))^2, 2, sum)
   BB <- sum(b)
-  MSA <- b/(b+a)                        
-    AIR <- AIR-diag(nrow(AIR))+diag(MSA)  
-    kmo <- BB/(AA+BB)                     
-    if (kmo >= 0.00 && kmo < 0.50){
-    test <- 'The KMO test yields a degree of common variance
-unacceptable for FA.'
-  } else if (kmo >= 0.50 && kmo < 0.60){
-    test <- 'The KMO test yields a degree of common variance miserable.'
-  } else if (kmo >= 0.60 && kmo < 0.70){
-    test <- 'The KMO test yields a degree of common variance mediocre.'
-  } else if (kmo >= 0.70 && kmo < 0.80){
-    test <- 'The KMO test yields a degree of common variance middling.'
-  } else if (kmo >= 0.80 && kmo < 0.90){
-    test <- 'The KMO test yields a degree of common variance meritorious.'
+  MSA <- b/(b + a)
+  AIR <- AIR - diag(nrow(AIR)) + diag(MSA)
+  kmo <- BB/(AA + BB)
+  if (kmo >= 0 && kmo < 0.5) {
+    test <- "The KMO test yields a degree of common variance\nunacceptable for FA."
+  } else if (kmo >= 0.5 && kmo < 0.6) {
+    test <- "The KMO test yields a degree of common variance miserable."
+  } else if (kmo >= 0.6 && kmo < 0.7) {
+    test <- "The KMO test yields a degree of common variance mediocre."
+  } else if (kmo >= 0.7 && kmo < 0.8) {
+    test <- "The KMO test yields a degree of common variance middling."
+  } else if (kmo >= 0.8 && kmo < 0.9) {
+    test <- "The KMO test yields a degree of common variance meritorious."
   } else {
-    test <- 'The KMO test yields a degree of common variance marvelous.'
+    test <- "The KMO test yields a degree of common variance marvelous."
   }
   
-  ans <- list(  overall = kmo,
-                report = test,
-                individual = MSA,
-                AIS = AIS,
-                AIR = AIR )
+  ans <- list(overall = kmo, report = test, individual = MSA, 
+              AIS = AIS, AIR = AIR)
   return(ans)
   
-}    # end of the function kmo()
+}  # end of the function kmo()
 
 kmo(data) #Run the Kmo function for the data you want to calculate
 
